@@ -1,0 +1,100 @@
+name: PvPScheduler
+main: com.example.pvpscheduler.PvPScheduler
+version: 2.0
+api-version: 1.16
+author: Kayji
+description: Advanced PvP Scheduler with Quests, Leaderboards, and Stats
+softdepend: [GriefPrevention]
+
+commands:
+  pvp:
+    description: PvP scheduler commands
+    usage: /<command> <subcommand> [args]
+    aliases: [pvpscheduler, pvps]
+
+permissions:
+  pvpscheduler.*:
+    description: Tất cả quyền của PvPScheduler
+    default: op
+    children:
+      pvpscheduler.use: true
+      pvpscheduler.admin: true
+      pvpscheduler.quest: true
+      pvpscheduler.stats: true
+      
+  pvpscheduler.use:
+    description: Quyền sử dụng các lệnh cơ bản
+    default: true
+    children:
+      pvpscheduler.status: true
+      pvpscheduler.top: true
+      pvpscheduler.stats.view: true
+      pvpscheduler.quest.view: true
+      
+  pvpscheduler.admin:
+    description: Quyền quản trị
+    default: op
+    children:
+      pvpscheduler.reload: true
+      pvpscheduler.setstart: true
+      pvpscheduler.setend: true
+      pvpscheduler.enable: true
+      pvpscheduler.disable: true
+      
+  pvpscheduler.reload:
+    description: Cho phép reload cấu hình
+    default: op
+    
+  pvpscheduler.setstart:
+    description: Cho phép đặt thời gian bắt đầu
+    default: op
+    
+  pvpscheduler.setend:
+    description: Cho phép đặt thời gian kết thúc
+    default: op
+    
+  pvpscheduler.enable:
+    description: Cho phép bật PvP thủ công
+    default: op
+    
+  pvpscheduler.disable:
+    description: Cho phép tắt PvP thủ công
+    default: op
+    
+  pvpscheduler.status:
+    description: Cho phép xem trạng thái PvP
+    default: true
+    
+  pvpscheduler.top:
+    description: Cho phép xem bảng xếp hạng
+    default: true
+    
+  pvpscheduler.stats:
+    description: Quyền xem thống kê
+    default: true
+    children:
+      pvpscheduler.stats.view: true
+      pvpscheduler.stats.view.others: true
+      
+  pvpscheduler.stats.view:
+    description: Cho phép xem thống kê của chính mình
+    default: true
+    
+  pvpscheduler.stats.view.others:
+    description: Cho phép xem thống kê của người khác
+    default: true
+    
+  pvpscheduler.quest:
+    description: Quyền nhiệm vụ
+    default: true
+    children:
+      pvpscheduler.quest.view: true
+      pvpscheduler.quest.assign: true
+      
+  pvpscheduler.quest.view:
+    description: Cho phép xem nhiệm vụ
+    default: true
+    
+  pvpscheduler.quest.assign:
+    description: Cho phép nhận nhiệm vụ
+    default: true

@@ -1,0 +1,109 @@
+# ProGuard Configuration Template
+# Thay đổi "com.example.yourpackage" và "YourMainClass" bằng giá trị thực tế của bạn
+
+# Bỏ qua warning về Java standard library
+-dontwarn java.**
+-dontwarn javax.**
+
+# Giữ lại toàn bộ enum classes
+-keep enum * {
+    *;
+}
+
+-keepnames enum * {
+    *;
+}
+
+-keepclassmembers enum * {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+    public int ordinal();
+    public java.lang.String name();
+}
+
+# ============================================
+# THAY ĐỔI PACKAGE NAME VÀ MAIN CLASS Ở ĐÂY
+# ============================================
+# Giữ lại các class cần thiết cho Bukkit
+-keep public class com.example.yourpackage.YourMainClass { *; }
+-keep class com.example.yourpackage.YourMainClass$* { *; }
+-keep public class com.example.yourpackage.command.** { *; }
+-keep public class com.example.yourpackage.listener.** { *; }
+
+# Obfuscate các manager, model, util, license (internal classes)
+-keep class com.example.yourpackage.manager.** {
+    public <init>(...);
+    public *;
+}
+
+-keep class com.example.yourpackage.manager.**$*$* {
+    *;
+}
+
+-keep class com.example.yourpackage.model.** {
+    public <init>(...);
+    public *;
+}
+
+-keep class com.example.yourpackage.util.** {
+    public *;
+}
+
+-keep class com.example.yourpackage.license.** {
+    public *;
+}
+
+-keep class com.example.yourpackage.security.** {
+    public *;
+}
+
+# Giữ lại các annotation và metadata
+-keepattributes *Annotation*
+-keepattributes Signature
+-keepattributes Exceptions
+-keepattributes SourceFile,LineNumberTable
+-keepattributes EnclosingMethod
+
+# Obfuscate với dictionary
+-obfuscationdictionary obfuscation-dictionary.txt
+-classobfuscationdictionary obfuscation-dictionary.txt
+-packageobfuscationdictionary obfuscation-dictionary.txt
+
+# Tắt optimization để tránh lỗi với Bukkit API
+-dontoptimize
+-dontpreverify
+
+# Obfuscate mạnh
+-allowaccessmodification
+-repackageclasses ''
+-overloadaggressively
+-useuniqueclassmembernames
+-dontskipnonpubliclibraryclasses
+-dontskipnonpubliclibraryclassmembers
+
+# Bỏ qua warnings
+-ignorewarnings
+-dontwarn org.bukkit.**
+
+# Giữ lại Bukkit event handlers và commands
+-keepclassmembers class * {
+    @org.bukkit.event.EventHandler *;
+}
+
+-keepclassmembers class * implements org.bukkit.command.CommandExecutor {
+    *;
+}
+
+-keepclassmembers class * implements org.bukkit.command.TabCompleter {
+    *;
+}
+
+-keepclassmembers class * implements org.bukkit.event.Listener {
+    *;
+}
+
+-keepclassmembers class * {
+    public <init>(...);
+    public <methods>;
+}
+

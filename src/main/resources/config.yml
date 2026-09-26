@@ -1,0 +1,84 @@
+# PvPScheduler Configuration
+# Cấu hình thời gian PvP
+
+# Thời gian bắt đầu PvP (định dạng HH:mm 24 giờ)
+start-time: "18:00"
+
+# Thời gian kết thúc PvP (định dạng HH:mm 24 giờ)
+end-time: "06:00"
+
+# Thời gian thông báo trước khi bật/tắt PvP (giây)
+notify-before: 30
+
+# Các ngày trong tuần được bật PvP (MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY)
+# Để trống = tất cả các ngày
+enabled-days:
+  - MONDAY
+  - TUESDAY
+  - WEDNESDAY
+  - THURSDAY
+  - FRIDAY
+  - SATURDAY
+  - SUNDAY
+
+# Cài đặt thống kê
+stats:
+  # Lưu thống kê vào file
+  save-stats: true
+  # Tự động lưu sau mỗi X giây
+  auto-save-interval: 300
+
+# Cài đặt nhiệm vụ
+quests:
+  # Bật hệ thống nhiệm vụ
+  enabled: true
+  # Tự động gán nhiệm vụ khi người chơi tham gia PvP
+  auto-assign: true
+  # Số nhiệm vụ tối đa mỗi người chơi
+  max-quests-per-player: 3
+
+# Cài đặt bảng xếp hạng
+leaderboard:
+  # Số người chơi hiển thị mặc định trong top
+  default-limit: 10
+  # Cập nhật bảng xếp hạng sau mỗi X giây
+  update-interval: 60
+
+# Cài đặt thông báo
+messages:
+  # Ngôn ngữ (vi hoặc en)
+  language: "vi"
+  # Bật thông báo broadcast
+  broadcast-enabled: true
+
+# Cài đặt Admin (Quản lý từ menu admin)
+admin-settings:
+  # Bật/tắt hệ thống PvP
+  pvp-system-enabled: true
+  # Bật/tắt hệ thống nhiệm vụ
+  quest-system-enabled: true
+  # Bật/tắt hệ thống anti-cheat
+  anti-cheat-enabled: true
+  # Bật/tắt hệ thống animation
+  animation-enabled: true
+  # Bật/tắt hệ thống thưởng
+  reward-system-enabled: true
+  # Bật/tắt bảng xếp hạng
+  leaderboard-enabled: true
+  # Bật/tắt hệ thống thống kê
+  stats-system-enabled: true
+  # Bật/tắt thông báo broadcast
+  broadcast-enabled: true
+  # Bật/tắt tự động lưu thống kê
+  auto-save-enabled: true
+  # Bật/tắt tự động gán nhiệm vụ
+  auto-assign-quests: true
+# Cài đặt Backup (DISABLED - Tối ưu hóa để giảm lag khi chạy)
+backup:
+  # CẢNH BÁO: Bật backup sẽ làm máy chủ lag do nén file recursively mỗi giờ!
+  # Chỉ bật nếu cần backup định kỳ
+  enabled: false
+  # Khoảng thời gian backup (milliseconds, default 3600000 = 1 giờ)
+  interval: 3600000
+  # Loại trừ file log khỏi backup
+  exclude-logs: true

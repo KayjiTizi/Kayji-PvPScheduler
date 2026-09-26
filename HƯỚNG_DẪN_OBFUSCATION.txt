@@ -1,0 +1,1034 @@
+═══════════════════════════════════════════════════════════════════════════════
+                    HƯỚNG DẪN OBFUSCATION CODE VỚI PROGUARD
+                    Cho Maven Projects (Bukkit/Spigot Plugins)
+═══════════════════════════════════════════════════════════════════════════════
+
+📋 MỤC LỤC:
+1. Cài đặt ProGuard Maven Plugin
+2. Tạo file proguard.conf
+3. Tạo file obfuscation-dictionary.txt
+4. Cấu hình pom.xml
+5. Build và sử dụng
+
+═══════════════════════════════════════════════════════════════════════════════
+
+1. CÀI ĐẶT PROGUARD MAVEN PLUGIN
+═══════════════════════════════════════════════════════════════════════════════
+
+Thêm vào file pom.xml trong thẻ <build><plugins>:
+
+<!-- ProGuard Maven Plugin - Obfuscate code -->
+<plugin>
+    <groupId>com.github.wvengen</groupId>
+    <artifactId>proguard-maven-plugin</artifactId>
+    <version>2.6.0</version>
+    <dependencies>
+        <dependency>
+            <groupId>com.guardsquare</groupId>
+            <artifactId>proguard-base</artifactId>
+            <version>7.2.2</version>
+        </dependency>
+    </dependencies>
+    <executions>
+        <execution>
+            <phase>package</phase>
+            <goals>
+                <goal>proguard</goal>
+            </goals>
+        </execution>
+    </executions>
+    <configuration>
+        <proguardVersion>7.2.2</proguardVersion>
+        <obfuscate>true</obfuscate>
+        <injar>${project.build.finalName}.jar</injar>
+        <outjar>${project.build.finalName}-obfuscated.jar</outjar>
+        <outputDirectory>${project.build.directory}</outputDirectory>
+        <attach>true</attach>
+        <attachArtifactClassifier>obfuscated</attachArtifactClassifier>
+        <libs>
+            <!-- Java 9+ không còn rt.jar, ProGuard sẽ tự động tìm Java runtime -->
+        </libs>
+        <proguardInclude>proguard.conf</proguardInclude>
+    </configuration>
+</plugin>
+
+═══════════════════════════════════════════════════════════════════════════════
+
+2. TẠO FILE proguard.conf
+═══════════════════════════════════════════════════════════════════════════════
+
+Tạo file proguard.conf ở thư mục gốc của project với nội dung:
+
+# ProGuard Configuration File
+# Bỏ qua warning về Java standard library (sẽ có sẵn khi chạy trên server)
+-dontwarn java.**
+-dontwarn javax.**
+
+# Giữ lại toàn bộ enum classes (bao gồm inner enums) - KHÔNG obfuscate
+-keep enum * {
+    *;
+}
+
+# Giữ lại tên enum classes (không đổi tên)
+-keepnames enum * {
+    *;
+}
+
+# Giữ lại enum methods cho tất cả enum (kể cả inner enums)
+-keepclassmembers enum * {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+    public int ordinal();
+    public java.lang.String name();
+}
+
+# Keep cụ thể các enum classes nếu cần (thay đổi package name cho phù hợp)
+# -keep class com.example.yourpackage.manager.RewardManager$Reward$Rarity {
+#     *;
+# }
+
+# Giữ lại các class cần thiết cho Bukkit
+-keep public class com.example.yourpackage.YourMainClass { *; }
+-keep class com.example.yourpackage.YourMainClass$* { *; }
+-keep public class com.example.yourpackage.command.** { *; }
+-keep public class com.example.yourpackage.listener.** { *; }
+
+# Obfuscate các manager, model, util, license (internal classes)
+-keep class com.example.yourpackage.manager.** {
+    public <init>(...);
+    public *;
+}
+
+# Giữ lại toàn bộ inner enum classes trong manager
+-keep class com.example.yourpackage.manager.**$*$* {
+    *;
+}
+
+-keep class com.example.yourpackage.model.** {
+    public <init>(...);
+    public *;
+}
+
+-keep class com.example.yourpackage.util.** {
+    public *;
+}
+
+# Keep toàn bộ LicenseClient (bao gồm private fields) để tránh duplicate field names
+# QUAN TRỌNG: Nếu có class nào bị lỗi "Duplicate key" khi chạy trên server,
+# cần keep toàn bộ class đó (không chỉ public methods)
+-keep class com.example.yourpackage.license.LicenseClient {
+    *;
+}
+
+-keep class com.example.yourpackage.license.** {
+    public *;
+}
+
+-keep class com.example.yourpackage.security.** {
+    public *;
+}
+
+# Giữ lại các annotation và metadata cần thiết
+-keepattributes *Annotation*
+-keepattributes Signature
+-keepattributes Exceptions
+-keepattributes SourceFile,LineNumberTable
+-keepattributes EnclosingMethod
+
+# Obfuscate tên class và method với dictionary
+-obfuscationdictionary obfuscation-dictionary.txt
+-classobfuscationdictionary obfuscation-dictionary.txt
+-packageobfuscationdictionary obfuscation-dictionary.txt
+
+# Tắt optimization để tránh lỗi incomplete class hierarchy với Bukkit API
+-dontoptimize
+-dontpreverify
+
+# Obfuscate mạnh (không optimize)
+-allowaccessmodification
+-repackageclasses ''
+-overloadaggressively
+-useuniqueclassmembernames
+-dontskipnonpubliclibraryclasses
+-dontskipnonpubliclibraryclassmembers
+
+# Bỏ qua warnings (sẽ có sẵn khi chạy trên server)
+-ignorewarnings
+
+# Bỏ qua incomplete class hierarchy (Bukkit API có thể không đầy đủ trong library jars)
+-dontwarn org.bukkit.entity.Entity
+-dontwarn org.bukkit.projectiles.ProjectileSource
+-dontwarn org.bukkit.**
+
+# Bỏ qua warning về unresolved references (sẽ có sẵn khi chạy)
+-dontwarn org.bukkit.Material
+
+# Giữ lại các method cần thiết cho Bukkit
+-keepclassmembers class * {
+    @org.bukkit.event.EventHandler *;
+}
+
+-keepclassmembers class * implements org.bukkit.command.CommandExecutor {
+    *;
+}
+
+-keepclassmembers class * implements org.bukkit.command.TabCompleter {
+    *;
+}
+
+-keepclassmembers class * implements org.bukkit.event.Listener {
+    *;
+}
+
+# Giữ lại các method public và constructor
+-keepclassmembers class * {
+    public <init>(...);
+    public <methods>;
+}
+
+═══════════════════════════════════════════════════════════════════════════════
+
+3. TẠO FILE obfuscation-dictionary.txt
+═══════════════════════════════════════════════════════════════════════════════
+
+Tạo file obfuscation-dictionary.txt ở thư mục gốc với danh sách tên ngắn gọn:
+
+a
+b
+c
+d
+e
+f
+g
+h
+i
+j
+k
+l
+m
+n
+o
+p
+q
+r
+s
+t
+u
+v
+w
+x
+y
+z
+aa
+ab
+ac
+ad
+ae
+af
+ag
+ah
+ai
+aj
+ak
+al
+am
+an
+ao
+ap
+aq
+ar
+as
+at
+au
+av
+aw
+ax
+ay
+az
+ba
+bb
+bc
+bd
+be
+bf
+bg
+bh
+bi
+bj
+bk
+bl
+bm
+bn
+bo
+bp
+bq
+br
+bs
+bt
+bu
+bv
+bw
+bx
+by
+bz
+ca
+cb
+cc
+cd
+ce
+cf
+cg
+ch
+ci
+cj
+ck
+cl
+cm
+cn
+co
+cp
+cq
+cr
+cs
+ct
+cu
+cv
+cw
+cx
+cy
+cz
+da
+db
+dc
+dd
+de
+df
+dg
+dh
+di
+dj
+dk
+dl
+dm
+dn
+do
+dp
+dq
+dr
+ds
+dt
+du
+dv
+dw
+dx
+dy
+dz
+ea
+eb
+ec
+ed
+ee
+ef
+eg
+eh
+ei
+ej
+ek
+el
+em
+en
+eo
+ep
+eq
+er
+es
+et
+eu
+ev
+ew
+ex
+ey
+ez
+fa
+fb
+fc
+fd
+fe
+ff
+fg
+fh
+fi
+fj
+fk
+fl
+fm
+fn
+fo
+fp
+fq
+fr
+fs
+ft
+fu
+fv
+fw
+fx
+fy
+fz
+ga
+gb
+gc
+gd
+ge
+gf
+gg
+gh
+gi
+gj
+gk
+gl
+gm
+gn
+go
+gp
+gq
+gr
+gs
+gt
+gu
+gv
+gw
+gx
+gy
+gz
+ha
+hb
+hc
+hd
+he
+hf
+hg
+hh
+hi
+hj
+hk
+hl
+hm
+hn
+ho
+hp
+hq
+hr
+hs
+ht
+hu
+hv
+hw
+hx
+hy
+hz
+ia
+ib
+ic
+id
+ie
+if
+ig
+ih
+ii
+ij
+ik
+il
+im
+in
+io
+ip
+iq
+ir
+is
+it
+iu
+iv
+iw
+ix
+iy
+iz
+ja
+jb
+jc
+jd
+je
+jf
+jg
+jh
+ji
+jj
+jk
+jl
+jm
+jn
+jo
+jp
+jq
+jr
+js
+jt
+ju
+jv
+jw
+jx
+jy
+jz
+ka
+kb
+kc
+kd
+ke
+kf
+kg
+kh
+ki
+kj
+kk
+kl
+km
+kn
+ko
+kp
+kq
+kr
+ks
+kt
+ku
+kv
+kw
+kx
+ky
+kz
+la
+lb
+lc
+ld
+le
+lf
+lg
+lh
+li
+lj
+lk
+ll
+lm
+ln
+lo
+lp
+lq
+lr
+ls
+lt
+lu
+lv
+lw
+lx
+ly
+lz
+ma
+mb
+mc
+md
+me
+mf
+mg
+mh
+mi
+mj
+mk
+ml
+mm
+mn
+mo
+mp
+mq
+mr
+ms
+mt
+mu
+mv
+mw
+mx
+my
+mz
+na
+nb
+nc
+nd
+ne
+nf
+ng
+nh
+ni
+nj
+nk
+nl
+nm
+nn
+no
+np
+nq
+nr
+ns
+nt
+nu
+nv
+nw
+nx
+ny
+nz
+oa
+ob
+oc
+od
+oe
+of
+og
+oh
+oi
+oj
+ok
+ol
+om
+on
+oo
+op
+oq
+or
+os
+ot
+ou
+ov
+ow
+ox
+oy
+oz
+pa
+pb
+pc
+pd
+pe
+pf
+pg
+ph
+pi
+pj
+pk
+pl
+pm
+pn
+po
+pp
+pq
+pr
+ps
+pt
+pu
+pv
+pw
+px
+py
+pz
+qa
+qb
+qc
+qd
+qe
+qf
+qg
+qh
+qi
+qj
+qk
+ql
+qm
+qn
+qo
+qp
+qq
+qr
+qs
+qt
+qu
+qv
+qw
+qx
+qy
+qz
+ra
+rb
+rc
+rd
+re
+rf
+rg
+rh
+ri
+rj
+rk
+rl
+rm
+rn
+ro
+rp
+rq
+rr
+rs
+rt
+ru
+rv
+rw
+rx
+ry
+rz
+sa
+sb
+sc
+sd
+se
+sf
+sg
+sh
+si
+sj
+sk
+sl
+sm
+sn
+so
+sp
+sq
+sr
+ss
+st
+su
+sv
+sw
+sx
+sy
+sz
+ta
+tb
+tc
+td
+te
+tf
+tg
+th
+ti
+tj
+tk
+tl
+tm
+tn
+to
+tp
+tq
+tr
+ts
+tt
+tu
+tv
+tw
+tx
+ty
+tz
+ua
+ub
+uc
+ud
+ue
+uf
+ug
+uh
+ui
+uj
+uk
+ul
+um
+un
+uo
+up
+uq
+ur
+us
+ut
+uu
+uv
+uw
+ux
+uy
+uz
+va
+vb
+vc
+vd
+ve
+vf
+vg
+vh
+vi
+vj
+vk
+vl
+vm
+vn
+vo
+vp
+vq
+vr
+vs
+vt
+vu
+vv
+vw
+vx
+vy
+vz
+wa
+wb
+wc
+wd
+we
+wf
+wg
+wh
+wi
+wj
+wk
+wl
+wm
+wn
+wo
+wp
+wq
+wr
+ws
+wt
+wu
+wv
+ww
+wx
+wy
+wz
+xa
+xb
+xc
+xd
+xe
+xf
+xg
+xh
+xi
+xj
+xk
+xl
+xm
+xn
+xo
+xp
+xq
+xr
+xs
+xt
+xu
+xv
+xw
+xx
+xy
+xz
+ya
+yb
+yc
+yd
+ye
+yf
+yg
+yh
+yi
+yj
+yk
+yl
+ym
+yn
+yo
+yp
+yq
+yr
+ys
+yt
+yu
+yv
+yw
+yx
+yy
+yz
+za
+zb
+zc
+zd
+ze
+zf
+zg
+zh
+zi
+zj
+zk
+zl
+zm
+zn
+zo
+zp
+zq
+zr
+zs
+zt
+zu
+zv
+zw
+zx
+zy
+zz
+
+(Lưu ý: File này có thể có hàng trăm hoặc hàng nghìn dòng tên ngắn gọn)
+
+═══════════════════════════════════════════════════════════════════════════════
+
+4. CẤU HÌNH pom.xml
+═══════════════════════════════════════════════════════════════════════════════
+
+QUAN TRỌNG: Đảm bảo maven-shade-plugin được cấu hình ĐÚNG:
+
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-shade-plugin</artifactId>
+    <version>3.2.4</version>
+    <executions>
+        <execution>
+            <phase>package</phase>
+            <goals>
+                <goal>shade</goal>
+            </goals>
+            <configuration>
+                <createDependencyReducedPom>false</createDependencyReducedPom>
+                <!-- Quan trọng: Attach shaded artifact với classifier -->
+                <shadedArtifactAttached>true</shadedArtifactAttached>
+                <shadedClassifierName>shaded</shadedClassifierName>
+            </configuration>
+        </execution>
+    </executions>
+</plugin>
+
+LƯU Ý: ProGuard sẽ sử dụng file JAR chính (đã được shade) làm input.
+
+═══════════════════════════════════════════════════════════════════════════════
+
+5. BUILD VÀ SỬ DỤNG
+═══════════════════════════════════════════════════════════════════════════════
+
+Bước 1: Build project
+    mvn clean package
+
+Bước 2: Kiểm tra file đã tạo
+    - File gốc: target/YourProject-1.0-SNAPSHOT.jar
+    - File shaded: target/YourProject-1.0-SNAPSHOT-shaded.jar
+    - File obfuscated: target/YourProject-1.0-SNAPSHOT-obfuscated.jar ⭐
+
+Bước 3: Sử dụng file obfuscated
+    - Copy file -obfuscated.jar vào thư mục plugins của server
+    - File này đã được obfuscate và sẵn sàng sử dụng
+
+═══════════════════════════════════════════════════════════════════════════════
+
+⚠️ LƯU Ý QUAN TRỌNG:
+═══════════════════════════════════════════════════════════════════════════════
+
+1. THAY ĐỔI PACKAGE NAME:
+   - Thay "com.example.yourpackage" bằng package name thực tế của bạn
+   - Thay "YourMainClass" bằng tên main class của bạn
+
+2. GIỮ LẠI CÁC CLASS QUAN TRỌNG:
+   - Main plugin class (phải giữ nguyên)
+   - Command classes (phải giữ nguyên)
+   - Listener classes (phải giữ nguyên)
+   - Enum classes (phải giữ nguyên)
+
+3. OBFUSCATE CÁC CLASS INTERNAL:
+   - Manager classes (có thể obfuscate)
+   - Model classes (có thể obfuscate)
+   - Util classes (có thể obfuscate)
+   - License classes (có thể obfuscate)
+   - Security classes (có thể obfuscate)
+
+4. NẾU GẶP LỖI:
+   - Lỗi "incomplete class hierarchy": Đã được xử lý bằng -dontoptimize
+   - Lỗi "can't find referenced method": Thêm -dontwarn cho class đó
+   - Lỗi "can't find referenced class": Thêm -dontwarn cho package đó
+   - Lỗi "Duplicate key" khi chạy trên server: Keep toàn bộ class đó:
+     -keep class com.example.yourpackage.YourClass {
+         *;
+     }
+
+5. TESTING:
+   - Luôn test file obfuscated trên server test trước
+   - Đảm bảo tất cả chức năng hoạt động bình thường
+   - Kiểm tra logs để đảm bảo không có lỗi
+
+═══════════════════════════════════════════════════════════════════════════════
+
+📝 VÍ DỤ CẤU HÌNH CHO DỰ ÁN KHÁC:
+═══════════════════════════════════════════════════════════════════════════════
+
+Nếu package của bạn là: com.myserver.myplugin
+
+Thì trong proguard.conf, thay đổi:
+-keep public class com.example.yourpackage.YourMainClass { *; }
+Thành:
+-keep public class com.myserver.myplugin.MyPlugin { *; }
+
+Và tương tự cho các package khác:
+-keep public class com.myserver.myplugin.command.** { *; }
+-keep public class com.myserver.myplugin.listener.** { *; }
+-keep class com.myserver.myplugin.manager.** { ... }
+
+═══════════════════════════════════════════════════════════════════════════════
+
+✅ CHECKLIST TRƯỚC KHI BUILD:
+═══════════════════════════════════════════════════════════════════════════════
+
+[ ] Đã thêm ProGuard plugin vào pom.xml
+[ ] Đã tạo file proguard.conf
+[ ] Đã tạo file obfuscation-dictionary.txt
+[ ] Đã thay đổi package name trong proguard.conf
+[ ] Đã thay đổi main class name trong proguard.conf
+[ ] Đã cấu hình maven-shade-plugin đúng
+[ ] Đã test build thành công
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🎯 KẾT QUẢ:
+═══════════════════════════════════════════════════════════════════════════════
+
+Sau khi build thành công, bạn sẽ có:
+- File obfuscated với tên class/method đã bị thay đổi thành tên ngắn gọn
+- Code khó reverse-engineer hơn
+- File size có thể nhỏ hơn một chút do optimization
+
+═══════════════════════════════════════════════════════════════════════════════
+
+📞 HỖ TRỢ:
+═══════════════════════════════════════════════════════════════════════════════
+
+Nếu gặp vấn đề, kiểm tra:
+1. Logs trong target/proguard_map.txt (mapping file)
+2. Logs trong target/proguard_seed.txt (classes được keep)
+3. Console output khi build để xem lỗi cụ thể
+
+═══════════════════════════════════════════════════════════════════════════════
+
